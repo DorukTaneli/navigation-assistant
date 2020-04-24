@@ -313,7 +313,7 @@ public class MapsActivity extends FragmentActivity implements
                         ));
                     }
                     Polyline polyline = mMap.addPolyline(new PolylineOptions().addAll(newDecodedPath));
-                    polyline.setColor(R.color.darkGrey);
+                    polyline.setColor(ContextCompat.getColor(getApplicationContext(), R.color.darkGrey));
                     polyline.setClickable(true);
 
                     mPolyLinesData.add(new PolylineData(polyline, route.legs[0]));
@@ -332,11 +332,12 @@ public class MapsActivity extends FragmentActivity implements
         for(PolylineData polylineData: mPolyLinesData){
             Log.d(TAG, "onPolylineClick: toString: " + polylineData.toString());
             if(polyline.getId().equals(polylineData.getPolyline().getId())){
-                polylineData.getPolyline().setColor(R.color.blue);
+                polylineData.getPolyline().setColor(ContextCompat.getColor(this, R.color.blue));
                 polylineData.getPolyline().setZIndex(1);
+
             }
             else{
-                polylineData.getPolyline().setColor(R.color.darkGrey);
+                polylineData.getPolyline().setColor(ContextCompat.getColor(this, R.color.darkGrey));
                 polylineData.getPolyline().setZIndex(0);
             }
         }
