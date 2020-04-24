@@ -26,7 +26,9 @@ import com.google.maps.GeoApiContext;
 import com.google.maps.PendingResult;
 import com.google.maps.model.DirectionsResult;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends FragmentActivity implements
+        OnMapReadyCallback,
+        GoogleMap.OnInfoWindowClickListener {
 
     private GoogleMap mMap;
 
@@ -85,6 +87,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mGeoApiContext = new GeoApiContext.Builder().apiKey(getString(R.string.google_maps_key)).build();
         }
 
+        //Set Listener for marker Info window
+        mMap.setOnInfoWindowClickListener(this);
+
         // Setting a click event handler for the map
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
 
@@ -102,7 +107,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 // Setting the title for the marker.
                 // This will be displayed on taping the marker
-                markerOptions.title("Destination");
+                markerOptions.title("Show routes");
 
                 // Clears the previously touched position
                 mMap.clear();
@@ -256,5 +261,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             }
         });
+    }
+
+    @Override
+    public void onInfoWindowClick(Marker marker) {
+        calculateDirections(marker);
     }
 }
