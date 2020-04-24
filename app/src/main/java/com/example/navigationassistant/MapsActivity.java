@@ -12,6 +12,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import com.example.navigationassistant.models.PolylineData;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -37,7 +38,8 @@ import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements
         OnMapReadyCallback,
-        GoogleMap.OnInfoWindowClickListener {
+        GoogleMap.OnInfoWindowClickListener,
+        GoogleMap.OnPolylineClickListener{
 
     private GoogleMap mMap;
 
@@ -59,6 +61,10 @@ public class MapsActivity extends FragmentActivity implements
 
     //Google Directions
     private GeoApiContext mGeoApiContext = null;
+
+    //ArrayList containing routes data
+    private ArrayList<PolylineData> mPolyLinesData = new ArrayList<>();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,6 +104,9 @@ public class MapsActivity extends FragmentActivity implements
 
         //Set Listener for marker Info window
         mMap.setOnInfoWindowClickListener(this);
+
+        //Set Listener for Polyline
+        mMap.setOnPolylineClickListener(this);
 
         // Setting a click event handler for the map
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
@@ -279,6 +288,14 @@ public class MapsActivity extends FragmentActivity implements
             public void run() {
                 Log.d(TAG, "run: result routes: " + result.routes.length);
 
+                if(!mPolyLinesData.isEmpty()) {
+                    for(PolylineData pd: mPolyLinesData) {
+                        pd.getPolyline().remove();
+                    }
+                    mPolyLinesData.clear();
+                    mPolyLinesData = new ArrayList<>();
+                }
+
                 for(DirectionsRoute route: result.routes){
                     Log.d(TAG, "run: leg: " + route.legs[0].toString());
                     List<com.google.maps.model.LatLng> decodedPath = PolylineEncoding.decode(route.overviewPolyline.getEncodedPath());
@@ -299,6 +316,7 @@ public class MapsActivity extends FragmentActivity implements
                     polyline.setColor(R.color.darkGrey);
                     polyline.setClickable(true);
 
+                    mPolyLinesData.add(new PolylineData(polyline, route.legs[0]));
                 }
             }
         });
@@ -307,5 +325,20 @@ public class MapsActivity extends FragmentActivity implements
     @Override
     public void onInfoWindowClick(Marker marker) {
         calculateDirections(marker);
+    }
+
+    @Override
+    public void onPolylineClick(Polyline polyline) {
+        for(PolylineData polylineData: mPolyLinesData){
+            Log.d(TAG, "onPolylineClick: toString: " + polylineData.toString());
+            if(polyline.getId().equals(polylineData.getPolyline().getId())){
+                polylineData.getPolyline().setColor(R.color.blue);
+                polylineData.getPolyline().setZIndex(1);
+            }
+            else{
+                polylineData.getPolyline().setColor(R.color.darkGrey);
+                polylineData.getPolyline().setZIndex(0);
+            }
+        }
     }
 }
