@@ -20,6 +20,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
@@ -326,6 +327,7 @@ public class MapsActivity extends FragmentActivity implements
                     if (tempDuration < durationInTraffic) {
                         durationInTraffic = tempDuration;
                         onPolylineClick(polyline);
+                        zoomRoute(polyline.getPoints());
                     }
 
                 }
@@ -359,5 +361,23 @@ public class MapsActivity extends FragmentActivity implements
                 polylineData.getPolyline().setZIndex(0);
             }
         }
+    }
+
+    public void zoomRoute(List<LatLng> lstLatLngRoute) {
+
+        if (mMap == null || lstLatLngRoute == null || lstLatLngRoute.isEmpty()) return;
+
+        LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
+        for (LatLng latLngPoint : lstLatLngRoute)
+            boundsBuilder.include(latLngPoint);
+
+        int routePadding = 360;
+        LatLngBounds latLngBounds = boundsBuilder.build();
+
+        mMap.animateCamera(
+                CameraUpdateFactory.newLatLngBounds(latLngBounds, routePadding),
+                600,
+                null
+        );
     }
 }
