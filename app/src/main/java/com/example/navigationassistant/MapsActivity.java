@@ -65,6 +65,9 @@ public class MapsActivity extends FragmentActivity implements
     //ArrayList containing routes data
     private ArrayList<PolylineData> mPolyLinesData = new ArrayList<>();
 
+    //Marker vars
+    private MarkerOptions markerOptions = new MarkerOptions();
+    private Marker marker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,9 +117,6 @@ public class MapsActivity extends FragmentActivity implements
             @Override
             public void onMapClick(LatLng latLng) {
 
-                // Creating a marker
-                MarkerOptions markerOptions = new MarkerOptions();
-
                 // Setting the position for the marker
                 markerOptions.position(latLng);
 
@@ -134,7 +134,10 @@ public class MapsActivity extends FragmentActivity implements
                 mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
 
                 // Placing a marker on the touched position
-                mMap.addMarker(markerOptions);
+                marker = mMap.addMarker(markerOptions);
+
+                // Show title and snippet immediately
+                marker.showInfoWindow();
             }
         });
 
@@ -317,6 +320,8 @@ public class MapsActivity extends FragmentActivity implements
                     polyline.setClickable(true);
 
                     mPolyLinesData.add(new PolylineData(polyline, route.legs[0]));
+
+                    onPolylineClick(polyline);
                 }
             }
         });
@@ -335,6 +340,13 @@ public class MapsActivity extends FragmentActivity implements
                 polylineData.getPolyline().setColor(ContextCompat.getColor(this, R.color.blue));
                 polylineData.getPolyline().setZIndex(1);
 
+                String inTraffic = (polylineData.getLeg().durationInTraffic == null) ? "0 mins" : polylineData.getLeg().durationInTraffic.humanReadable;
+
+                marker.setTitle("Duration");
+                marker.setSnippet("In Traffic: " + inTraffic +
+                                    ", Total: " + polylineData.getLeg().duration);
+
+                marker.showInfoWindow();
             }
             else{
                 polylineData.getPolyline().setColor(ContextCompat.getColor(this, R.color.darkGrey));
