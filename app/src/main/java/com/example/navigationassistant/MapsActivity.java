@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.View;
 
 import com.example.navigationassistant.models.PolylineData;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -379,5 +380,17 @@ public class MapsActivity extends FragmentActivity implements
                 600,
                 null
         );
+    }
+
+    //Called when the user touches reset button
+    public void resetMap(View view){
+        if(mMap != null) {
+            mMap.clear();
+
+            if(!mPolyLinesData.isEmpty()){
+                mPolyLinesData.clear();
+                mPolyLinesData = new ArrayList<>();
+            }
+        }
     }
 }
