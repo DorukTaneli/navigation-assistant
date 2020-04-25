@@ -299,6 +299,7 @@ public class MapsActivity extends FragmentActivity implements
                     mPolyLinesData = new ArrayList<>();
                 }
 
+                double durationInTraffic = 99999999;
                 for(DirectionsRoute route: result.routes){
                     Log.d(TAG, "run: leg: " + route.legs[0].toString());
                     List<com.google.maps.model.LatLng> decodedPath = PolylineEncoding.decode(route.overviewPolyline.getEncodedPath());
@@ -318,10 +319,15 @@ public class MapsActivity extends FragmentActivity implements
                     Polyline polyline = mMap.addPolyline(new PolylineOptions().addAll(newDecodedPath));
                     polyline.setColor(ContextCompat.getColor(getApplicationContext(), R.color.darkGrey));
                     polyline.setClickable(true);
-
                     mPolyLinesData.add(new PolylineData(polyline, route.legs[0]));
 
-                    onPolylineClick(polyline);
+                    //Highlight the route with shortest durationInTraffic
+                    double tempDuration = (route.legs[0].durationInTraffic == null) ? 0 : route.legs[0].durationInTraffic.inSeconds;
+                    if (tempDuration < durationInTraffic) {
+                        durationInTraffic = tempDuration;
+                        onPolylineClick(polyline);
+                    }
+
                 }
             }
         });
