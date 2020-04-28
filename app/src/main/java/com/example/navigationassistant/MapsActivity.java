@@ -34,6 +34,7 @@ import com.google.maps.PendingResult;
 import com.google.maps.internal.PolylineEncoding;
 import com.google.maps.model.DirectionsResult;
 import com.google.maps.model.DirectionsRoute;
+import com.google.maps.model.TravelMode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -261,6 +262,8 @@ public class MapsActivity extends FragmentActivity implements
         );
         DirectionsApiRequest directions = new DirectionsApiRequest(mGeoApiContext);
 
+        directions.departureTimeNow();
+        directions.mode(TravelMode.DRIVING);
         directions.alternatives(true);
         directions.origin(
                 new com.google.maps.model.LatLng(
@@ -349,10 +352,8 @@ public class MapsActivity extends FragmentActivity implements
                 polylineData.getPolyline().setColor(ContextCompat.getColor(this, R.color.blue));
                 polylineData.getPolyline().setZIndex(1);
 
-                String inTraffic = (polylineData.getLeg().durationInTraffic == null) ? "0 mins" : polylineData.getLeg().durationInTraffic.humanReadable;
-
                 marker.setTitle("Duration");
-                marker.setSnippet("In Traffic: " + inTraffic +
+                marker.setSnippet("In Traffic: " + polylineData.getLeg().durationInTraffic.humanReadable +
                                     ", Total: " + polylineData.getLeg().duration);
 
                 marker.showInfoWindow();
