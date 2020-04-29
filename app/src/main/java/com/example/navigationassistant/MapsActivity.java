@@ -408,7 +408,7 @@ public class MapsActivity extends FragmentActivity implements
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.US.toString());
         intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Listening...");
         try {
             startActivityForResult(intent, REQ_CODE);
