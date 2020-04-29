@@ -34,7 +34,7 @@
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
         android:clickable="true"
-        android:src="@drawable/ic_mic_white_24dp"
+        android:src="@drawable/ic_mic_white_48dp"
         app:backgroundTint="@android:color/holo_blue_dark"
         android:onClick="RecognizeSpeech"/>
 
