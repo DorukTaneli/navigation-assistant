@@ -110,9 +110,8 @@ public class MapsActivity extends FragmentActivity implements
     }
 
     public void onPause(){
-        if(t1 !=null){
+        if(t1 != null){
             t1.stop();
-            t1.shutdown();
         }
         super.onPause();
     }
@@ -366,6 +365,7 @@ public class MapsActivity extends FragmentActivity implements
                         zoomRoute(polyline.getPoints());
                     }
 
+                    StartTextToSpeech();
                 }
             }
         });
@@ -456,5 +456,12 @@ public class MapsActivity extends FragmentActivity implements
 //                break;
 //            }
 //        }
+    }
+
+    private void StartTextToSpeech() {
+        String toSpeak = "You'll spend the least time in traffic with this route";
+        //make speech 30% faster than original
+        t1.setSpeechRate((float)1.3);
+        t1.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
     }
 }
