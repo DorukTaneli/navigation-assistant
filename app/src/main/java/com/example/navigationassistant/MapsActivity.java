@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.speech.RecognizerIntent;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
@@ -49,14 +50,17 @@ public class MapsActivity extends FragmentActivity implements
         GoogleMap.OnInfoWindowClickListener,
         GoogleMap.OnPolylineClickListener{
 
+    //Google Map instance
     private GoogleMap mMap;
 
+    //Tag for errors
     private static final String TAG = MapsActivity.class.getSimpleName();
 
-    // A default location (Istanbul) and default zoom to use when location permission is
-    // not granted.
+    // A default location (Istanbul) and default zoom to use when location permission is not granted.
     private final LatLng mDefaultLocation = new LatLng(41, 29);
     private static final int DEFAULT_ZOOM = 15;
+
+    //Permissions
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
     private boolean mLocationPermissionGranted;
 
@@ -79,6 +83,9 @@ public class MapsActivity extends FragmentActivity implements
 
     //request code for Google speech recognition intent
     private final int REQ_CODE = 100;
+
+    //Text to Speech
+    private TextToSpeech t1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
