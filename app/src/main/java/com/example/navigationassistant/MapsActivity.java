@@ -44,11 +44,12 @@ import com.google.maps.model.TravelMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Random;
 
 public class MapsActivity extends FragmentActivity implements
         OnMapReadyCallback,
         GoogleMap.OnInfoWindowClickListener,
-        GoogleMap.OnPolylineClickListener{
+        GoogleMap.OnPolylineClickListener {
 
     //Google Map instance
     private GoogleMap mMap;
@@ -109,11 +110,20 @@ public class MapsActivity extends FragmentActivity implements
         });
     }
 
+    @Override
     public void onPause(){
         if(t1 != null){
             t1.stop();
         }
         super.onPause();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (t1 != null) {
+            t1.shutdown();
+        }
     }
 
 
@@ -459,9 +469,18 @@ public class MapsActivity extends FragmentActivity implements
     }
 
     private void StartTextToSpeech() {
-        String toSpeak = "You'll spend the least time in traffic with this route";
+        // Pick one of these in random for speech
+        String[] SpeechOptions = {
+                "You'll spend the least time in traffic with this route",
+                "This is the route with shortest duration in traffic",
+                "I highlighted the best route for you",
+                "Here is the best route"};
+        int random = new Random().nextInt(4);
+        String toSpeak = SpeechOptions[random];
+
         //make speech 30% faster than original
         t1.setSpeechRate((float)1.3);
+
         t1.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
     }
 }
