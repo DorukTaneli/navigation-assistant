@@ -61,6 +61,10 @@ public class MapsActivity extends FragmentActivity implements
     private final LatLng mDefaultLocation = new LatLng(41, 29);
     private static final int DEFAULT_ZOOM = 15;
 
+    //Addresses for voice recognition navigation
+    private final LatLng homeCesme = new LatLng(38.31650, 25.38591);
+    private final LatLng workCesme = new LatLng(38.28198, 26.37073);
+
     //Permissions
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
     private boolean mLocationPermissionGranted;
@@ -456,16 +460,20 @@ public class MapsActivity extends FragmentActivity implements
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-//        switch (requestCode) {
-//            case REQ_CODE: {
-//                if (resultCode = = RESULT_OK && null ! = data) {
-//                    ArrayList result = data
-//                            .getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
-//                    textView.setText(result.get(0));
-//                }
-//                break;
-//            }
-//        }
+        switch (requestCode) {
+            case REQ_CODE: {
+                if (resultCode == RESULT_OK && null != data) {
+                    ArrayList result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                    String str = (String)result.get(0);
+                    if (str.toLowerCase().contains("home")) {
+                        resetMap(getCurrentFocus());
+                    } else if (str.toLowerCase().contains("work")) {
+                        resetMap(getCurrentFocus());
+                    }
+                }
+                break;
+            }
+        }
     }
 
     private void StartTextToSpeech() {
