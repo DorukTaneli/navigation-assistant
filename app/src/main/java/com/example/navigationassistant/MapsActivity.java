@@ -62,7 +62,7 @@ public class MapsActivity extends FragmentActivity implements
     private static final int DEFAULT_ZOOM = 15;
 
     //Addresses for voice recognition navigation
-    private final LatLng homeCesme = new LatLng(38.31650, 25.38591);
+    private final LatLng homeCesme = new LatLng(38.31650, 26.38591);
     private final LatLng workCesme = new LatLng(38.28198, 26.37073);
 
     //Permissions
@@ -161,31 +161,9 @@ public class MapsActivity extends FragmentActivity implements
 
         // Setting a click event handler for the map
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
-
             @Override
             public void onMapClick(LatLng latLng) {
-
-                // Setting the position for the marker
-                markerOptions.position(latLng);
-
-                // Make the marker draggable
-                markerOptions.draggable(true);
-
-                // Setting the title for the marker.
-                // This will be displayed on taping the marker
-                markerOptions.title("Show routes");
-
-                // Clears the previously touched position
-                mMap.clear();
-
-                // Animating to the touched position
-                mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
-
-                // Placing a marker on the touched position
-                marker = mMap.addMarker(markerOptions);
-
-                // Show title and snippet immediately
-                marker.showInfoWindow();
+                AddMarker(latLng);
             }
         });
 
@@ -197,6 +175,32 @@ public class MapsActivity extends FragmentActivity implements
 
         // Get the current location of the device and set the position of the map.
         getDeviceLocation();
+    }
+
+    private Marker AddMarker(LatLng latLng) {
+        // Setting the position for the marker
+        markerOptions.position(latLng);
+
+        // Make the marker draggable
+        markerOptions.draggable(true);
+
+        // Setting the title for the marker.
+        // This will be displayed on taping the marker
+        markerOptions.title("Show routes");
+
+        // Clears the previously touched position
+        mMap.clear();
+
+        // Animating to the touched position
+        mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
+
+        // Placing a marker on the touched position
+        marker = mMap.addMarker(markerOptions);
+
+        // Show title and snippet immediately
+        marker.showInfoWindow();
+
+        return marker;
     }
 
     /**
@@ -467,8 +471,12 @@ public class MapsActivity extends FragmentActivity implements
                     String str = (String)result.get(0);
                     if (str.toLowerCase().contains("home")) {
                         resetMap(getCurrentFocus());
+                        AddMarker(homeCesme);
+                        calculateDirections(marker);
                     } else if (str.toLowerCase().contains("work")) {
                         resetMap(getCurrentFocus());
+                        AddMarker(workCesme);
+                        calculateDirections(marker);
                     }
                 }
                 break;
