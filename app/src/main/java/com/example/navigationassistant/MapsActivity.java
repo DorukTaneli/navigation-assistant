@@ -146,19 +146,18 @@ public class MapsActivity extends FragmentActivity implements
         autocompleteFragment.setCountry("TR");
 
         // Specify the types of place data to return.
-        autocompleteFragment.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.NAME));
+        autocompleteFragment.setPlaceFields(Arrays.asList(Place.Field.LAT_LNG, Place.Field.NAME));
 
         // Set up a PlaceSelectionListener to handle the response.
         autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
             @Override
             public void onPlaceSelected(Place place) {
-                // TODO: Get info about the selected place.
-                Log.i(TAG, "Place: " + place.getName() + ", " + place.getId());
+                Log.i(TAG, "Place: " + place.getName());
+                AddPlaceMarker(place.getLatLng(), place.getName());
             }
 
             @Override
             public void onError(Status status) {
-                // TODO: Handle the error.
                 Log.i(TAG, "An error occurred: " + status);
             }
         });
@@ -234,9 +233,32 @@ public class MapsActivity extends FragmentActivity implements
         // Make the marker draggable
         markerOptions.draggable(true);
 
-        // Setting the title for the marker.
-        // This will be displayed on taping the marker
+        // Setting the title and snippet for the marker.
         markerOptions.title("Show routes");
+        markerOptions.snippet(null);
+
+        // Clears the previously touched position
+        mMap.clear();
+
+        // Animating to the touched position
+        mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
+
+        // Placing a marker on the touched position
+        marker = mMap.addMarker(markerOptions);
+
+        // Show title and snippet immediately
+        marker.showInfoWindow();
+
+        return marker;
+    }
+
+    private Marker AddPlaceMarker(LatLng latLng, String title) {
+        // Setting the position for the marker
+        markerOptions.position(latLng);
+
+        // Setting the title and snippet for the marker.
+        markerOptions.title(title);
+        markerOptions.snippet("Tap to show routes");
 
         // Clears the previously touched position
         mMap.clear();
