@@ -37,6 +37,8 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
+import com.google.android.libraries.places.api.model.RectangularBounds;
+import com.google.android.libraries.places.api.model.TypeFilter;
 import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
@@ -72,6 +74,11 @@ public class MapsActivity extends FragmentActivity implements
     //Addresses for voice recognition navigation
     private final LatLng homeCesme = new LatLng(38.31650, 26.38591);
     private final LatLng workCesme = new LatLng(38.28198, 26.37073);
+
+    //Coordinates for Location bias
+    private final LatLng CesmeSouthWest = new LatLng(38.27509, 26.34397);
+    private final LatLng CesmeNorthEast = new LatLng(38.33702, 26.43143);
+    private final RectangularBounds CesmeBounds = RectangularBounds.newInstance(CesmeSouthWest, CesmeNorthEast);
 
     //Permissions
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
@@ -133,6 +140,10 @@ public class MapsActivity extends FragmentActivity implements
         // Initialize the AutocompleteSupportFragment.
         AutocompleteSupportFragment autocompleteFragment = (AutocompleteSupportFragment)
                 getSupportFragmentManager().findFragmentById(R.id.autocomplete_fragment);
+
+        autocompleteFragment.setTypeFilter(TypeFilter.ESTABLISHMENT);
+        autocompleteFragment.setLocationBias(CesmeBounds);
+        autocompleteFragment.setCountry("TR");
 
         // Specify the types of place data to return.
         autocompleteFragment.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.NAME));
