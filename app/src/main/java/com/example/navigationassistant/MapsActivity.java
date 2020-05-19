@@ -20,6 +20,7 @@ import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.example.navigationassistant.models.PolylineData;
+import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -36,9 +37,13 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.model.AutocompletePrediction;
+import com.google.android.libraries.places.api.model.AutocompleteSessionToken;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.api.model.RectangularBounds;
 import com.google.android.libraries.places.api.model.TypeFilter;
+import com.google.android.libraries.places.api.net.FetchPlaceRequest;
+import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest;
 import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
@@ -48,6 +53,7 @@ import com.google.maps.PendingResult;
 import com.google.maps.internal.PolylineEncoding;
 import com.google.maps.model.DirectionsResult;
 import com.google.maps.model.DirectionsRoute;
+import com.google.maps.model.TrafficModel;
 import com.google.maps.model.TravelMode;
 
 import java.util.ArrayList;
@@ -55,6 +61,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class MapsActivity extends FragmentActivity implements
         OnMapReadyCallback,
@@ -110,6 +117,9 @@ public class MapsActivity extends FragmentActivity implements
     //Map Fragment
     private SupportMapFragment mapFragment;
 
+    //Places API client
+    private PlacesClient placesClient;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -135,7 +145,7 @@ public class MapsActivity extends FragmentActivity implements
         Places.initialize(getApplicationContext(), getString(R.string.google_maps_key));
 
         // Create a new Places client instance
-        PlacesClient placesClient = Places.createClient(this);
+        placesClient = Places.createClient(this);
 
         // Initialize the AutocompleteSupportFragment.
         AutocompleteSupportFragment autocompleteFragment = (AutocompleteSupportFragment)
@@ -193,10 +203,7 @@ public class MapsActivity extends FragmentActivity implements
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        //LatLng istanbul = new LatLng(41, 29);
-        //mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        //mMap.moveCamera(CameraUpdateFactory.newLatLng(istanbul));
-        //mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(istanbul, 10));
+        mMap.getUiSettings().setRotateGesturesEnabled(false);
 
         if(mGeoApiContext == null) {
             mGeoApiContext = new GeoApiContext.Builder().apiKey(getString(R.string.google_maps_key)).build();
@@ -392,6 +399,7 @@ public class MapsActivity extends FragmentActivity implements
 
         directions.departureTimeNow();
         directions.mode(TravelMode.DRIVING);
+        directions.trafficModel(TrafficModel.OPTIMISTIC);
         directions.alternatives(true);
         directions.origin(
                 new com.google.maps.model.LatLng(
@@ -481,7 +489,9 @@ public class MapsActivity extends FragmentActivity implements
                 polylineData.getPolyline().setColor(ContextCompat.getColor(this, R.color.blue));
                 polylineData.getPolyline().setZIndex(1);
 
-                marker.setTitle("Duration");
+                if (marker.getTitle().equals("Show routes")) {
+                    marker.setTitle("Duration");
+                }
                 marker.setSnippet("In Traffic: " + polylineData.getLeg().durationInTraffic.humanReadable +
                                     ", Total: " + polylineData.getLeg().duration);
 
@@ -548,13 +558,22 @@ public class MapsActivity extends FragmentActivity implements
                 if (resultCode == RESULT_OK && null != data) {
                     ArrayList result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
                     String str = (String)result.get(0);
-                    if (str.toLowerCase().contains("home")) {
+                    if (str.contains("home")) {
                         resetMap(getCurrentFocus());
                         AddMarker(homeCesme);
                         calculateDirections(marker);
-                    } else if (str.toLowerCase().contains("work")) {
+                    } else if (str.contains("work")) {
                         resetMap(getCurrentFocus());
                         AddMarker(workCesme);
+                        calculateDirections(marker);
+                    } else if (str.contains("gas")) {
+                        LocationRequest("shell");
+                        calculateDirections(marker);
+                    } else if (str.contains("eat") || str.contains("hungry")) {
+                        LocationRequest("kumrucu");
+                        calculateDirections(marker);
+                    } else if (str.contains("groceries") || str.contains("market")) {
+                        LocationRequest("migros");
                         calculateDirections(marker);
                     }
                 }
@@ -569,13 +588,56 @@ public class MapsActivity extends FragmentActivity implements
                 "You'll spend the least time in traffic with this route",
                 "This is the route with shortest duration in traffic",
                 "I highlighted the best route for you",
-                "Here is the best route"};
-        int random = new Random().nextInt(4);
+                "Here is the best route",
+                "Let's drive"};
+        int random = new Random().nextInt(5);
         String toSpeak = SpeechOptions[random];
 
         //make speech 30% faster than original
         t1.setSpeechRate((float)1.3);
 
         t1.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
+    }
+
+    private void LocationRequest(String query) {
+        // Create a new token for the autocomplete session. Pass this to FindAutocompletePredictionsRequest,
+        // and once again when the user makes a selection (for example when calling fetchPlace()).
+        AutocompleteSessionToken token = AutocompleteSessionToken.newInstance();
+
+        // Use the builder to create a FindAutocompletePredictionsRequest.
+        FindAutocompletePredictionsRequest request = FindAutocompletePredictionsRequest.builder()
+                // Call either setLocationBias() OR setLocationRestriction().
+                .setLocationBias(CesmeBounds)
+                //.setLocationRestriction(CesmeBounds)
+                .setOrigin(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()))
+                .setCountry("TR")
+                .setTypeFilter(TypeFilter.ESTABLISHMENT)
+                .setSessionToken(token)
+                .setQuery(query)
+                .build();
+
+        placesClient.findAutocompletePredictions(request).addOnSuccessListener((response) -> {
+            int min = 999999999;
+            String placeId = null;
+            for (AutocompletePrediction prediction : response.getAutocompletePredictions()) {
+                if (prediction.getDistanceMeters() < min) {
+                    min = prediction.getDistanceMeters();
+                    placeId = prediction.getPlaceId();
+                }
+            }
+
+            FetchPlaceRequest fprequest = FetchPlaceRequest.builder(placeId,
+                    Arrays.asList(Place.Field.LAT_LNG, Place.Field.NAME)).build();
+
+            placesClient.fetchPlace(fprequest).addOnSuccessListener((p1) -> {
+                AddPlaceMarker(p1.getPlace().getLatLng(), p1.getPlace().getName());
+            });
+
+        }).addOnFailureListener((exception) -> {
+            if (exception instanceof ApiException) {
+                ApiException apiException = (ApiException) exception;
+                Log.e(TAG, "Place not found: " + apiException.getStatusCode());
+            }
+        });
     }
 }
