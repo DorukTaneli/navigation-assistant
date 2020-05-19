@@ -441,6 +441,8 @@ public class MapsActivity extends FragmentActivity implements
                 }
 
                 double durationInTraffic = 99999999;
+                String totalDuration = "";
+                String inTrafficDuration = "";
                 for(DirectionsRoute route: result.routes){
                     Log.d(TAG, "run: leg: " + route.legs[0].toString());
                     List<com.google.maps.model.LatLng> decodedPath = PolylineEncoding.decode(route.overviewPolyline.getEncodedPath());
@@ -468,10 +470,14 @@ public class MapsActivity extends FragmentActivity implements
                         durationInTraffic = tempDuration;
                         onPolylineClick(polyline);
                         zoomRoute(polyline.getPoints());
+                        totalDuration = route.legs[0].duration.humanReadable
+                                .substring(0, route.legs[0].duration.humanReadable.length() - 5);
+                        inTrafficDuration = route.legs[0].durationInTraffic.humanReadable
+                                .substring(0, route.legs[0].durationInTraffic.humanReadable.length() - 5);
                     }
 
-                    StartTextToSpeech();
                 }
+                StartTextToSpeech(totalDuration, inTrafficDuration);
             }
         });
     }
@@ -582,16 +588,17 @@ public class MapsActivity extends FragmentActivity implements
         }
     }
 
-    private void StartTextToSpeech() {
+    private void StartTextToSpeech(String totalDuration, String inTrafficDuration) {
         // Pick one of these in random for speech
         String[] SpeechOptions = {
-                "You'll spend the least time in traffic with this route",
-                "This is the route with shortest duration in traffic",
-                "I highlighted the best route for you",
-                "Here is the best route",
-                "Let's drive"};
+                "You'll spend the least time in traffic with this route.",
+                "This is the route with shortest duration in traffic.",
+                "I highlighted the best route for you.",
+                "Here is the best route.",
+                "Let's drive!"};
         int random = new Random().nextInt(5);
-        String toSpeak = SpeechOptions[random];
+        String toSpeak = SpeechOptions[random].concat(
+                " It takes " + inTrafficDuration + "minutes in traffic and " + totalDuration + " in total.");
 
         //make speech 30% faster than original
         t1.setSpeechRate((float)1.3);
