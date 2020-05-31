@@ -270,9 +270,6 @@ public class MapsActivity extends FragmentActivity implements
         // Placing a marker on the touched position
         Marker m1 = mMap.addMarker(markerOptions);
 
-        // Show title and snippet immediately
-        m1.showInfoWindow();
-
         return m1;
     }
 
@@ -617,21 +614,18 @@ public class MapsActivity extends FragmentActivity implements
                 .build();
 
         placesClient.findAutocompletePredictions(request).addOnSuccessListener((response) -> {
-            int min = 999999999;
-            String placeId = null;
             for (AutocompletePrediction prediction : response.getAutocompletePredictions()) {
-                if (prediction.getDistanceMeters() < min) {
-                    min = prediction.getDistanceMeters();
-                    placeId = prediction.getPlaceId();
-                }
+                String placeId = prediction.getPlaceId();
+
+                FetchPlaceRequest fprequest = FetchPlaceRequest.builder(placeId,
+                        Arrays.asList(Place.Field.LAT_LNG, Place.Field.NAME)).build();
+
+                placesClient.fetchPlace(fprequest).addOnSuccessListener((p1) -> {
+                    AddPlaceMarker(p1.getPlace().getLatLng(), p1.getPlace().getName());
+                });
             }
 
-            FetchPlaceRequest fprequest = FetchPlaceRequest.builder(placeId,
-                    Arrays.asList(Place.Field.LAT_LNG, Place.Field.NAME)).build();
 
-            placesClient.fetchPlace(fprequest).addOnSuccessListener((p1) -> {
-                AddPlaceMarker(p1.getPlace().getLatLng(), p1.getPlace().getName());
-            });
 
         }).addOnFailureListener((exception) -> {
             if (exception instanceof ApiException) {
