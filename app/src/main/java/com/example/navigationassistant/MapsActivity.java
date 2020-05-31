@@ -87,6 +87,11 @@ public class MapsActivity extends FragmentActivity implements
     private final LatLng CesmeNorthEast = new LatLng(38.33702, 26.43143);
     private final RectangularBounds CesmeBounds = RectangularBounds.newInstance(CesmeSouthWest, CesmeNorthEast);
 
+    //Lists for voice recognition
+    List<String> market = new ArrayList<String>(
+            Arrays.asList("groceries", "market", "egg", "milk", "diaper")
+    );
+
     //Permissions
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
     private boolean mLocationPermissionGranted;
@@ -568,14 +573,32 @@ public class MapsActivity extends FragmentActivity implements
                     } else if (str.contains("eat") || str.contains("hungry")) {
                         resetMap(getCurrentFocus());
                         LocationRequest("kumrucu");
-                    } else if (str.contains("groceries") || str.contains("market")) {
+                    } else if (containsFromList(str, market)) {
                         resetMap(getCurrentFocus());
-                        LocationRequest("migros");
+                        LocationRequest("market");
+                    } else if (str.contains("medicine") || str.contains("pharmacy") || str.contains("drug")) {
+                        resetMap(getCurrentFocus());
+                        LocationRequest("eczane");
+                    } else if (str.contains("bleed") || str.contains("hurt") || str.contains("hospital")) {
+                        resetMap(getCurrentFocus());
+                        LocationRequest("hastane");
+                    } else if (str.contains("fruit") || str.contains("vegetable")) {
+                        resetMap(getCurrentFocus());
+                        LocationRequest("manav");
                     }
                 }
                 break;
             }
         }
+    }
+
+    private boolean containsFromList(String input, List<String> list) {
+        for (String s: list) {
+            if (input.contains(s)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void StartTextToSpeech(String totalDuration, String inTrafficDuration) {
