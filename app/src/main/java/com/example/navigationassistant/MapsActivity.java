@@ -267,19 +267,13 @@ public class MapsActivity extends FragmentActivity implements
         markerOptions.title(title);
         markerOptions.snippet("Tap to show routes");
 
-        // Clears the previously touched position
-        mMap.clear();
-
-        // Animating to the touched position
-        mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
-
         // Placing a marker on the touched position
-        marker = mMap.addMarker(markerOptions);
+        Marker m1 = mMap.addMarker(markerOptions);
 
         // Show title and snippet immediately
-        marker.showInfoWindow();
+        m1.showInfoWindow();
 
-        return marker;
+        return m1;
     }
 
     /**
@@ -475,7 +469,6 @@ public class MapsActivity extends FragmentActivity implements
                         inTrafficDuration = route.legs[0].durationInTraffic.humanReadable
                                 .substring(0, route.legs[0].durationInTraffic.humanReadable.length() - 5);
                     }
-
                 }
                 StartTextToSpeech(totalDuration, inTrafficDuration);
             }
@@ -573,14 +566,14 @@ public class MapsActivity extends FragmentActivity implements
                         AddMarker(workCesme);
                         calculateDirections(marker);
                     } else if (str.contains("gas")) {
+                        resetMap(getCurrentFocus());
                         LocationRequest("shell");
-                        calculateDirections(marker);
                     } else if (str.contains("eat") || str.contains("hungry")) {
+                        resetMap(getCurrentFocus());
                         LocationRequest("kumrucu");
-                        calculateDirections(marker);
                     } else if (str.contains("groceries") || str.contains("market")) {
+                        resetMap(getCurrentFocus());
                         LocationRequest("migros");
-                        calculateDirections(marker);
                     }
                 }
                 break;
@@ -591,14 +584,14 @@ public class MapsActivity extends FragmentActivity implements
     private void StartTextToSpeech(String totalDuration, String inTrafficDuration) {
         // Pick one of these in random for speech
         String[] SpeechOptions = {
-                "You'll spend the least time in traffic with this route.",
-                "This is the route with shortest duration in traffic.",
+                "I suggest this route.",
+                "Let's go!",
                 "I highlighted the best route for you.",
                 "Here is the best route.",
                 "Let's drive!"};
         int random = new Random().nextInt(5);
-        String toSpeak = SpeechOptions[random].concat(
-                " It takes " + inTrafficDuration + "minutes in traffic and " + totalDuration + " in total.");
+        String toSpeak = SpeechOptions[random];
+                //.concat(" It takes " + inTrafficDuration + "minutes in traffic and " + totalDuration + " in total.");
 
         //make speech 30% faster than original
         t1.setSpeechRate((float)1.3);
