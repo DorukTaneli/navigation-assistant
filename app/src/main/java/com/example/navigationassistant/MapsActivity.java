@@ -61,7 +61,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class MapsActivity extends FragmentActivity implements
         OnMapReadyCallback,
@@ -88,8 +87,15 @@ public class MapsActivity extends FragmentActivity implements
     private final RectangularBounds CesmeBounds = RectangularBounds.newInstance(CesmeSouthWest, CesmeNorthEast);
 
     //Lists for voice recognition
-    List<String> market = new ArrayList<String>(
+    private List<String> market = new ArrayList<String>(
             Arrays.asList("groceries", "market", "egg", "milk", "diaper")
+    );
+
+    //Gas station preference
+    private boolean stationPreferenceExists = false;
+    private String preferredGasStation;
+    private List<String> gasStations = new ArrayList<String>(
+            Arrays.asList("BP", "shell", "opet", "petrol ofisi")
     );
 
     //Permissions
@@ -142,6 +148,9 @@ public class MapsActivity extends FragmentActivity implements
             public void onInit(int status) {
                 if(status != TextToSpeech.ERROR) {
                     t1.setLanguage(Locale.US);
+
+                    //make speech 30% faster than original
+                    t1.setSpeechRate((float)1.3);
                 }
             }
         });
@@ -384,7 +393,20 @@ public class MapsActivity extends FragmentActivity implements
         }
     }
 
+    private void checkAndSetGasStationPreference(Marker marker) {
+        if (!stationPreferenceExists) {
+            for (String gasStation: gasStations) {
+                if (marker.getTitle().contains(gasStation)) {
+                    preferredGasStation = gasStation;
+                    break;
+                }
+            }
+        }
+    }
+
     private void calculateDirections(Marker marker){
+        checkAndSetGasStationPreference(marker);
+
         Log.d(TAG, "calculateDirections: calculating directions.");
 
         com.google.maps.model.LatLng destination = new com.google.maps.model.LatLng(
@@ -472,7 +494,7 @@ public class MapsActivity extends FragmentActivity implements
                                 .substring(0, route.legs[0].durationInTraffic.humanReadable.length() - 5);
                     }
                 }
-                StartTextToSpeech(totalDuration, inTrafficDuration);
+                StartNavigationSpeech(totalDuration, inTrafficDuration);
             }
         });
     }
@@ -561,30 +583,49 @@ public class MapsActivity extends FragmentActivity implements
                     String str = (String)result.get(0);
                     if (str.contains("home")) {
                         resetMap(getCurrentFocus());
-                        AddMarker(homeCesme);
-                        calculateDirections(marker);
+                        Marker home = AddMarker(homeCesme);
+                        calculateDirections(home);
                     } else if (str.contains("work")) {
                         resetMap(getCurrentFocus());
-                        AddMarker(workCesme);
-                        calculateDirections(marker);
-                    } else if (str.contains("gas")) {
+                        Marker work = AddMarker(workCesme);
+                        calculateDirections(work);
+                    } else if (str.contains("gas") || str.contains("fuel")) {
                         resetMap(getCurrentFocus());
-                        LocationRequest("shell");
-                    } else if (str.contains("eat") || str.contains("hungry")) {
+                        if (stationPreferenceExists) {
+                            LocationRequest(preferredGasStation);
+                            StartPlacesSpeech(preferredGasStation);
+                        } else {
+                            LocationRequest("benzin");
+                            StartPlacesSpeech("gas stations");
+                        }
+                    } else if (str.contains("all") && (str.contains("gas") || str.contains("fuel"))) {
                         resetMap(getCurrentFocus());
-                        LocationRequest("kumrucu");
+                        LocationRequest("benzin");
+                        StartPlacesSpeech("gas stations");
+                    } else if (str.contains("eat") || str.contains("hungry") || str.contains("restaurant")) {
+                        resetMap(getCurrentFocus());
+                        LocationRequest("restoran");
+                        StartPlacesSpeech("restaurants");
                     } else if (containsFromList(str, market)) {
                         resetMap(getCurrentFocus());
                         LocationRequest("market");
+                        StartPlacesSpeech("markets");
                     } else if (str.contains("medicine") || str.contains("pharmacy") || str.contains("drug")) {
                         resetMap(getCurrentFocus());
                         LocationRequest("eczane");
+                        StartPlacesSpeech("pharmacies");
                     } else if (str.contains("bleed") || str.contains("hurt") || str.contains("hospital")) {
                         resetMap(getCurrentFocus());
                         LocationRequest("hastane");
+                        StartPlacesSpeech("hospitals");
                     } else if (str.contains("fruit") || str.contains("vegetable")) {
                         resetMap(getCurrentFocus());
                         LocationRequest("manav");
+                        StartPlacesSpeech("greengrocers");
+                    } else if (str.contains("bread") || str.contains("bakery")) {
+                        resetMap(getCurrentFocus());
+                        LocationRequest("fırın");
+                        StartPlacesSpeech("bakery");
                     }
                 }
                 break;
@@ -601,20 +642,31 @@ public class MapsActivity extends FragmentActivity implements
         return false;
     }
 
-    private void StartTextToSpeech(String totalDuration, String inTrafficDuration) {
+    private void StartNavigationSpeech(String totalDuration, String inTrafficDuration) {
         // Pick one of these in random for speech
         String[] SpeechOptions = {
                 "I suggest this route.",
                 "Let's go!",
-                "I highlighted the best route for you.",
+                "I highlighted the best route.",
                 "Here is the best route.",
                 "Let's drive!"};
         int random = new Random().nextInt(5);
         String toSpeak = SpeechOptions[random];
                 //.concat(" It takes " + inTrafficDuration + "minutes in traffic and " + totalDuration + " in total.");
 
-        //make speech 30% faster than original
-        t1.setSpeechRate((float)1.3);
+        t1.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
+    }
+
+    private void StartPlacesSpeech(String place) {
+        // Pick one of these in random for speech
+        String[] SpeechOptions = {
+                "There are a few " + place + " nearby.",
+                "I suggest one of these " + place,
+                "I recommend these " + place,
+                "Here are a few options.",
+                "Try these " + place};
+        int random = new Random().nextInt(5);
+        String toSpeak = SpeechOptions[random];
 
         t1.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
     }
