@@ -80,11 +80,16 @@ public class MapsActivity extends FragmentActivity implements
     //Addresses for voice recognition navigation
     private final LatLng homeCesme = new LatLng(38.31650, 26.38591);
     private final LatLng workCesme = new LatLng(38.28198, 26.37073);
+    private final LatLng homeIst = new LatLng(41.19459, 29.04670);
+    private final LatLng workIst = new LatLng(41.10496, 26.02260);
 
     //Coordinates for Location bias
     private final LatLng CesmeSouthWest = new LatLng(38.27509, 26.34397);
     private final LatLng CesmeNorthEast = new LatLng(38.33702, 26.43143);
     private final RectangularBounds CesmeBounds = RectangularBounds.newInstance(CesmeSouthWest, CesmeNorthEast);
+    private final LatLng IstSouthWest = new LatLng(41.18492, 29.04177);
+    private final LatLng IstNorthEast = new LatLng(41.19647, 29.05794);
+    private final RectangularBounds IstBounds = RectangularBounds.newInstance(IstSouthWest, IstNorthEast);
 
     //Lists for voice recognition
     private List<String> market = new ArrayList<String>(
@@ -95,7 +100,7 @@ public class MapsActivity extends FragmentActivity implements
     private boolean stationPreferenceExists = false;
     private String preferredGasStation;
     private List<String> gasStations = new ArrayList<String>(
-            Arrays.asList("BP", "shell", "opet", "petrol ofisi")
+            Arrays.asList("bp", "shell", "opet", "petrol ofisi")
     );
 
     //Permissions
@@ -115,10 +120,6 @@ public class MapsActivity extends FragmentActivity implements
     //ArrayList containing routes data
     private ArrayList<PolylineData> mPolyLinesData = new ArrayList<>();
 
-    //Marker vars
-    private MarkerOptions markerOptions = new MarkerOptions();
-    private Marker marker;
-
     //request code for Google speech recognition intent
     private final int REQ_CODE = 100;
 
@@ -130,6 +131,9 @@ public class MapsActivity extends FragmentActivity implements
 
     //Places API client
     private PlacesClient placesClient;
+
+    //Destination marker to show durations
+    private Marker destination;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -166,7 +170,7 @@ public class MapsActivity extends FragmentActivity implements
                 getSupportFragmentManager().findFragmentById(R.id.autocomplete_fragment);
 
         autocompleteFragment.setTypeFilter(TypeFilter.ESTABLISHMENT);
-        autocompleteFragment.setLocationBias(CesmeBounds);
+        autocompleteFragment.setLocationBias(IstBounds);
         autocompleteFragment.setCountry("TR");
 
         // Specify the types of place data to return.
@@ -248,6 +252,8 @@ public class MapsActivity extends FragmentActivity implements
     }
 
     private Marker AddMarker(LatLng latLng) {
+        MarkerOptions markerOptions = new MarkerOptions();
+
         // Setting the position for the marker
         markerOptions.position(latLng);
 
@@ -265,24 +271,26 @@ public class MapsActivity extends FragmentActivity implements
         mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
 
         // Placing a marker on the touched position
-        marker = mMap.addMarker(markerOptions);
+        Marker m1 = mMap.addMarker(markerOptions);
 
         // Show title and snippet immediately
-        marker.showInfoWindow();
+        m1.showInfoWindow();
 
-        return marker;
+        return m1;
     }
 
     private Marker AddPlaceMarker(LatLng latLng, String title) {
         // Setting the position for the marker
-        markerOptions.position(latLng);
+        MarkerOptions myMarkerOptions = new MarkerOptions();
+
+        myMarkerOptions.position(latLng);
 
         // Setting the title and snippet for the marker.
-        markerOptions.title(title);
-        markerOptions.snippet("Tap to show routes");
+        myMarkerOptions.title(title);
+        myMarkerOptions.snippet("Tap to show routes");
 
         // Placing a marker on the touched position
-        Marker m1 = mMap.addMarker(markerOptions);
+        Marker m1 = mMap.addMarker(myMarkerOptions);
 
         return m1;
     }
@@ -395,9 +403,10 @@ public class MapsActivity extends FragmentActivity implements
 
     private void checkAndSetGasStationPreference(Marker marker) {
         if (!stationPreferenceExists) {
-            for (String gasStation: gasStations) {
-                if (marker.getTitle().contains(gasStation)) {
-                    preferredGasStation = gasStation;
+            for (String myGasStation: gasStations) {
+                if (marker.getTitle().toLowerCase().contains(myGasStation)) {
+                    preferredGasStation = myGasStation;
+                    stationPreferenceExists = true;
                     break;
                 }
             }
@@ -405,6 +414,8 @@ public class MapsActivity extends FragmentActivity implements
     }
 
     private void calculateDirections(Marker marker){
+        destination = marker;
+
         checkAndSetGasStationPreference(marker);
 
         Log.d(TAG, "calculateDirections: calculating directions.");
@@ -512,13 +523,13 @@ public class MapsActivity extends FragmentActivity implements
                 polylineData.getPolyline().setColor(ContextCompat.getColor(this, R.color.blue));
                 polylineData.getPolyline().setZIndex(1);
 
-                if (marker.getTitle().equals("Show routes")) {
-                    marker.setTitle("Duration");
+                if (destination.getTitle().equals("Show routes")) {
+                    destination.setTitle("Duration");
                 }
-                marker.setSnippet("In Traffic: " + polylineData.getLeg().durationInTraffic.humanReadable +
+                destination.setSnippet("In Traffic: " + polylineData.getLeg().durationInTraffic.humanReadable +
                                     ", Total: " + polylineData.getLeg().duration);
 
-                marker.showInfoWindow();
+                destination.showInfoWindow();
             }
             else{
                 polylineData.getPolyline().setColor(ContextCompat.getColor(this, R.color.darkGrey));
@@ -583,11 +594,11 @@ public class MapsActivity extends FragmentActivity implements
                     String str = (String)result.get(0);
                     if (str.contains("home")) {
                         resetMap(getCurrentFocus());
-                        Marker home = AddMarker(homeCesme);
+                        Marker home = AddMarker(homeIst);
                         calculateDirections(home);
                     } else if (str.contains("work")) {
                         resetMap(getCurrentFocus());
-                        Marker work = AddMarker(workCesme);
+                        Marker work = AddMarker(workIst);
                         calculateDirections(work);
                     } else if (str.contains("gas") || str.contains("fuel")) {
                         resetMap(getCurrentFocus());
@@ -595,7 +606,9 @@ public class MapsActivity extends FragmentActivity implements
                             LocationRequest(preferredGasStation);
                             StartPlacesSpeech(preferredGasStation);
                         } else {
-                            LocationRequest("benzin");
+                            LocationRequest("total");
+                            LocationRequest("petrol ofisi");
+                            LocationRequest("bp");
                             StartPlacesSpeech("gas stations");
                         }
                     } else if (str.contains("all") && (str.contains("gas") || str.contains("fuel"))) {
@@ -618,6 +631,7 @@ public class MapsActivity extends FragmentActivity implements
                         resetMap(getCurrentFocus());
                         LocationRequest("hastane");
                         StartPlacesSpeech("hospitals");
+                        //TODO: call 112
                     } else if (str.contains("fruit") || str.contains("vegetable")) {
                         resetMap(getCurrentFocus());
                         LocationRequest("manav");
@@ -679,8 +693,8 @@ public class MapsActivity extends FragmentActivity implements
         // Use the builder to create a FindAutocompletePredictionsRequest.
         FindAutocompletePredictionsRequest request = FindAutocompletePredictionsRequest.builder()
                 // Call either setLocationBias() OR setLocationRestriction().
-                .setLocationBias(CesmeBounds)
-                //.setLocationRestriction(CesmeBounds)
+                .setLocationBias(IstBounds)
+                //.setLocationRestriction(IstBounds)
                 .setOrigin(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()))
                 .setCountry("TR")
                 .setTypeFilter(TypeFilter.ESTABLISHMENT)
