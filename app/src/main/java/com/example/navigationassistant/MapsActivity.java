@@ -92,14 +92,17 @@ public class MapsActivity extends FragmentActivity implements
     private final RectangularBounds IstBounds = RectangularBounds.newInstance(IstSouthWest, IstNorthEast);
 
     //Lists for voice recognition
-    private List<String> market = new ArrayList<String>(
-            Arrays.asList("groceries", "market", "egg", "milk", "diaper")
-    );
+    private List<String> market = new ArrayList<>(
+            Arrays.asList("groceries", "market", "egg", "milk", "diaper", "yogurt"));
+    private List<String> manav = new ArrayList<>(
+            Arrays.asList("fruit", "vegetable", "tomato", "cucumber", "pepper", "orange"));
+    private List<String> cafe = new ArrayList<>(
+            Arrays.asList("cafe", "coffee", "relax", "chill", "tea", "time"));
 
     //Gas station preference
     private boolean stationPreferenceExists = false;
     private String preferredGasStation;
-    private List<String> gasStations = new ArrayList<String>(
+    private List<String> gasStations = new ArrayList<>(
             Arrays.asList("bp", "shell", "opet", "petrol ofisi")
     );
 
@@ -623,10 +626,6 @@ public class MapsActivity extends FragmentActivity implements
                         resetMap(getCurrentFocus());
                         LocationRequest("restoran");
                         StartPlacesSpeech("restaurants");
-                    } else if (containsFromList(str, market)) {
-                        resetMap(getCurrentFocus());
-                        LocationRequest("market");
-                        StartPlacesSpeech("markets");
                     } else if (str.contains("medicine") || str.contains("pharmacy") || str.contains("drug")) {
                         resetMap(getCurrentFocus());
                         LocationRequest("eczane");
@@ -636,14 +635,22 @@ public class MapsActivity extends FragmentActivity implements
                         LocationRequest("hastane");
                         StartPlacesSpeech("hospitals");
                         //TODO: call 112
-                    } else if (str.contains("fruit") || str.contains("vegetable")) {
-                        resetMap(getCurrentFocus());
-                        LocationRequest("manav");
-                        StartPlacesSpeech("greengrocers");
                     } else if (str.contains("bread") || str.contains("bakery")) {
                         resetMap(getCurrentFocus());
                         LocationRequest("fırın");
                         StartPlacesSpeech("bakery");
+                    } else if (containsFromList(str, market)) {
+                        resetMap(getCurrentFocus());
+                        LocationRequest("market");
+                        StartPlacesSpeech("markets");
+                    } else if (containsFromList(str, manav)) {
+                        resetMap(getCurrentFocus());
+                        LocationRequest("manav");
+                        StartPlacesSpeech("greengrocers");
+                    } else if (containsFromList(str, cafe)) {
+                        resetMap(getCurrentFocus());
+                        LocationRequest("cafe");
+                        StartPlacesSpeech("cafes");
                     }
                 }
                 break;
