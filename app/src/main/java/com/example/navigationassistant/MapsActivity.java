@@ -592,6 +592,7 @@ public class MapsActivity extends FragmentActivity implements
                 if (resultCode == RESULT_OK && null != data) {
                     ArrayList result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
                     String str = (String)result.get(0);
+                    //TODO: manav and bakery together
                     if (str.contains("home")) {
                         resetMap(getCurrentFocus());
                         Marker home = AddMarker(homeIst);
@@ -600,6 +601,13 @@ public class MapsActivity extends FragmentActivity implements
                         resetMap(getCurrentFocus());
                         Marker work = AddMarker(workIst);
                         calculateDirections(work);
+                    } else if (str.contains("all") && (str.contains("gas") || str.contains("fuel"))) {
+                        resetMap(getCurrentFocus());
+                        stationPreferenceExists = false;
+                        LocationRequest("total");
+                        LocationRequest("petrol ofisi");
+                        LocationRequest("bp");
+                        StartPlacesSpeech("gas stations");
                     } else if (str.contains("gas") || str.contains("fuel")) {
                         resetMap(getCurrentFocus());
                         if (stationPreferenceExists) {
@@ -611,10 +619,6 @@ public class MapsActivity extends FragmentActivity implements
                             LocationRequest("bp");
                             StartPlacesSpeech("gas stations");
                         }
-                    } else if (str.contains("all") && (str.contains("gas") || str.contains("fuel"))) {
-                        resetMap(getCurrentFocus());
-                        LocationRequest("benzin");
-                        StartPlacesSpeech("gas stations");
                     } else if (str.contains("eat") || str.contains("hungry") || str.contains("restaurant")) {
                         resetMap(getCurrentFocus());
                         LocationRequest("restoran");
