@@ -9,6 +9,7 @@ import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -28,6 +29,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
@@ -81,7 +83,7 @@ public class MapsActivity extends FragmentActivity implements
     private final LatLng homeCesme = new LatLng(38.31650, 26.38591);
     private final LatLng workCesme = new LatLng(38.28198, 26.37073);
     private final LatLng homeIst = new LatLng(41.19459, 29.04670);
-    private final LatLng workIst = new LatLng(41.10496, 26.02260);
+    private final LatLng workIst = new LatLng(41.10496, 29.02260);
 
     //Coordinates for Location bias
     private final LatLng CesmeSouthWest = new LatLng(38.27509, 26.34397);
@@ -125,6 +127,7 @@ public class MapsActivity extends FragmentActivity implements
 
     //request code for Google speech recognition intent
     private final int REQ_CODE = 100;
+    private final int REQ_CODE_EMERGENCY = 101;
 
     //Text to Speech
     private TextToSpeech t1;
@@ -156,8 +159,8 @@ public class MapsActivity extends FragmentActivity implements
                 if(status != TextToSpeech.ERROR) {
                     t1.setLanguage(Locale.US);
 
-                    //make speech 30% faster than original
-                    t1.setSpeechRate((float)1.3);
+                    //make speech 40% faster than original
+                    t1.setSpeechRate((float)1.4);
                 }
             }
         });
@@ -291,6 +294,25 @@ public class MapsActivity extends FragmentActivity implements
         // Setting the title and snippet for the marker.
         myMarkerOptions.title(title);
         myMarkerOptions.snippet("Tap to show routes");
+
+        // Placing a marker on the touched position
+        Marker m1 = mMap.addMarker(myMarkerOptions);
+
+        return m1;
+    }
+
+    private Marker AddPlaceMarkerColored(LatLng latLng, String title) {
+        // Setting the position for the marker
+        MarkerOptions myMarkerOptions = new MarkerOptions();
+
+        myMarkerOptions.position(latLng);
+
+        // Setting the title and snippet for the marker.
+        myMarkerOptions.title(title);
+        myMarkerOptions.snippet("Tap to show routes");
+
+        //Change marker color
+        myMarkerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
 
         // Placing a marker on the touched position
         Marker m1 = mMap.addMarker(myMarkerOptions);
@@ -622,19 +644,31 @@ public class MapsActivity extends FragmentActivity implements
                             LocationRequest("bp");
                             StartPlacesSpeech("gas stations");
                         }
+                    } else if (str.contains("cheese") && str.contains("wine")) {
+                        resetMap(getCurrentFocus());
+                        LocationRequest("market");
+                        LocationRequestColored("tekel");
+                        t1.speak("Showing markets and liquor stores", TextToSpeech.QUEUE_FLUSH, null);
                     } else if (str.contains("eat") || str.contains("hungry") || str.contains("restaurant")) {
                         resetMap(getCurrentFocus());
                         LocationRequest("restoran");
                         StartPlacesSpeech("restaurants");
-                    } else if (str.contains("medicine") || str.contains("pharmacy") || str.contains("drug")) {
+                    } else if (str.contains("medicine") || str.contains("pharmacy") || str.contains("disinfectant")) {
                         resetMap(getCurrentFocus());
                         LocationRequest("eczane");
                         StartPlacesSpeech("pharmacies");
+                        while (t1.isSpeaking()){} //wait for speech to finish
+                        t1.speak("get well soon", TextToSpeech.QUEUE_FLUSH, null);
+                    } else if (str.contains("alcohol") || str.contains("wine") || str.contains("beer")) {
+                        resetMap(getCurrentFocus());
+                        LocationRequest("tekel");
+                        StartPlacesSpeech("liquor stores");
                     } else if (str.contains("bleed") || str.contains("hurt") || str.contains("hospital")) {
                         resetMap(getCurrentFocus());
                         LocationRequest("hastane");
                         StartPlacesSpeech("hospitals");
-                        //TODO: call 112
+                        while (t1.isSpeaking()){} //wait for speech to finish
+                        CheckAndCallEmergencyServices();
                     } else if (str.contains("bread") || str.contains("bakery")) {
                         resetMap(getCurrentFocus());
                         LocationRequest("fırın");
@@ -655,6 +689,42 @@ public class MapsActivity extends FragmentActivity implements
                 }
                 break;
             }
+            case REQ_CODE_EMERGENCY: {
+                if (resultCode == RESULT_OK && null != data) {
+                    ArrayList myResult = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                    String string = (String) myResult.get(0);
+                    if (string.toLowerCase().contains("yes") || string.toLowerCase().contains("please")) {
+                        Uri number = Uri.parse("tel:112");
+                        Intent callIntent = new Intent(Intent.ACTION_DIAL, number);
+                        startActivity(callIntent);
+                    } else if (string.contains("medicine") || string.contains("disinfectant")) {
+                        t1.speak("okay", TextToSpeech.QUEUE_FLUSH, null);
+                        resetMap(getCurrentFocus());
+                        LocationRequest("eczane");
+                        while (t1.isSpeaking()){} //wait for speech to finish
+                        StartPlacesSpeech("pharmacies");
+                        while (t1.isSpeaking()){} //wait for speech to finish
+                        t1.speak("get well soon", TextToSpeech.QUEUE_FLUSH, null);
+                    }
+                }
+            }
+        }
+    }
+
+    private void CheckAndCallEmergencyServices() {
+        t1.speak("Should I call emergency services?", TextToSpeech.QUEUE_FLUSH, null);
+        while (t1.isSpeaking()){} //wait for speech to finish
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.US.toString());
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Call Emergency Services?");
+        try {
+            startActivityForResult(intent, REQ_CODE_EMERGENCY);
+        } catch (ActivityNotFoundException a) {
+            Toast.makeText(getApplicationContext(),
+                    "Sorry your device not supported",
+                    Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -722,6 +792,45 @@ public class MapsActivity extends FragmentActivity implements
 
                 placesClient.fetchPlace(fprequest).addOnSuccessListener((p1) -> {
                     AddPlaceMarker(p1.getPlace().getLatLng(), p1.getPlace().getName());
+                });
+            }
+
+
+
+        }).addOnFailureListener((exception) -> {
+            if (exception instanceof ApiException) {
+                ApiException apiException = (ApiException) exception;
+                Log.e(TAG, "Place not found: " + apiException.getStatusCode());
+            }
+        });
+    }
+
+    private void LocationRequestColored(String query) {
+        // Create a new token for the autocomplete session. Pass this to FindAutocompletePredictionsRequest,
+        // and once again when the user makes a selection (for example when calling fetchPlace()).
+        AutocompleteSessionToken token = AutocompleteSessionToken.newInstance();
+
+        // Use the builder to create a FindAutocompletePredictionsRequest.
+        FindAutocompletePredictionsRequest request = FindAutocompletePredictionsRequest.builder()
+                // Call either setLocationBias() OR setLocationRestriction().
+                .setLocationBias(IstBounds)
+                //.setLocationRestriction(IstBounds)
+                .setOrigin(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()))
+                .setCountry("TR")
+                .setTypeFilter(TypeFilter.ESTABLISHMENT)
+                .setSessionToken(token)
+                .setQuery(query)
+                .build();
+
+        placesClient.findAutocompletePredictions(request).addOnSuccessListener((response) -> {
+            for (AutocompletePrediction prediction : response.getAutocompletePredictions()) {
+                String placeId = prediction.getPlaceId();
+
+                FetchPlaceRequest fprequest = FetchPlaceRequest.builder(placeId,
+                        Arrays.asList(Place.Field.LAT_LNG, Place.Field.NAME)).build();
+
+                placesClient.fetchPlace(fprequest).addOnSuccessListener((p1) -> {
+                    AddPlaceMarkerColored(p1.getPlace().getLatLng(), p1.getPlace().getName());
                 });
             }
 
